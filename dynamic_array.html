@@ -1,0 +1,135 @@
+<html>
+<head><title>Dynamic_array API</title></head>
+
+<body>
+<h1><tt>Dynamic_array</tt> API</h1>
+
+<h2>Public classes</h2>
+<pre>
+class Subscript_range_exception {
+};
+</pre>
+
+<h2>Public functions</h2>
+<dl>
+<dt><tt>Dynamic_array();</tt><dd>
+	<dl>
+	<dt><b>Purpose</b><dd>
+	Create an array with size 0.
+	<dt><b>Preconditions</b><dd>
+	None.
+	<dt><b>Exceptions</b><dd>
+	None.
+	</dl>
+<p><dt><tt>Dynamic_array(Dynamic_array & d);</tt><dd>
+	<dl>
+	<dt><b>Purpose</b><dd>
+	Create an array containing a copy of the elements in <tt>d</tt>
+	<dt><b>Preconditions</b><dd>
+	There is enough dynamic memory available.
+	d is not *this.
+	<dt><b>Exceptions</b><dd>
+	None.
+	</dl>
+<p><dt><tt>Dynamic_array &operator=(Dynamic_array & d);</tt><dd>
+	<dl>
+	<dt><b>Purpose</b><dd>
+	Copy the contents of d.
+	Return a reference to this object.
+	<dt><b>Preconditions</b><dd>
+	There is enough dynamic memory available.
+	<dt><b>Exceptions</b><dd>
+	None.
+	</dl>
+<p><dt><tt>~Dynamic_array();</tt><dd>
+	<dl>
+	<dt><b>Purpose</b><dd>
+	Delete all memory dynamically allocated by this object.
+	<dt><b>Preconditions</b><dd>
+	None.
+	<dt><b>Exceptions</b><dd>
+	None.
+	</dl>
+<p><dt><tt>int get_size(void);</tt><dd>
+	<dl>
+	<dt><b>Purpose</b><dd>
+	Return the size of the array.
+	<dt><b>Preconditions</b><dd>
+	None.
+	<dt><b>Exceptions</b><dd>
+	None.
+	</dl>
+<p><dt><tt>void print_state(void);</tt><dd>
+	<dl>
+	<dt><b>Purpose</b><dd>
+	Write the internal state of the object to standard output.
+	<dt><b>Preconditions</b><dd>
+	None.
+	<dt><b>Exceptions</b><dd>
+	None.
+	</dl>
+<p><dt><tt>int& operator[](int i);</tt><dd>
+	<dl>
+	<dt><b>Purpose</b><dd>
+	Return a reference to the element with index <tt>i</tt>.
+	<dt><b>Preconditions</b><dd>
+	None.
+	<dt><b>Exceptions</b><dd>
+	If <tt>i < 0</tt> or <tt>i >= get_size()</tt> throw <tt>Subscript_range_exception</tt>.
+	</dl>
+<p><dt><tt>void insert(int x, int i);</tt><dd>
+	<dl>
+	<dt><b>Purpose</b><dd>
+	Insert x at position i.
+	<br>
+	Shift elements at positions i and higher one position to the right.
+	<dt><b>Preconditions</b><dd>
+	There is enough dynamic memory available.
+	<dt><b>Exceptions</b><dd>
+	If <tt>i</tt> < 0 or <tt>i</tt> > <tt>get_size()</tt>
+	throw <tt>Subscript_range_exception</tt>.
+	</dl>
+<p><dt><tt>void insert(Dynamic_array & d, int i);</tt><dd>
+	<dl>
+	<dt><b>Purpose</b><dd>
+	Insert the elements of  d at position i.
+	<br>
+	Shift elements at positions i and higher n positions to the right,
+	where n is the size of d.
+	<dt><b>Preconditions</b><dd>
+	There is enough dynamic memory available.
+	<br>
+	d is not *this
+	<dt><b>Exceptions</b><dd>
+	If <tt>i</tt> < 0 or <tt>i</tt> > <tt>get_size()</tt>
+	throw <tt>Subscript_range_exception</tt>.
+	</dl>
+<p><dt><tt>void remove(int i);</tt><dd>
+	<dl>
+	<dt><b>Purpose</b><dd>
+	Remove the element at position i.
+	<br>
+	Shift elements <tt>i</tt>..<i>n</i>-1 one position to the left,
+	where <i>n</i> is the size of the array.
+	<dt><b>Preconditions</b><dd>
+	None.
+	<dt><b>Exceptions</b><dd>
+	If <tt>i</tt> < 0 or <tt>i</tt> >= <tt>get_size()</tt>
+	throw <tt>Subscript_range_exception</tt>.
+	</dl>
+<p><dt><tt>void remove(int start, int end);</tt><dd>
+	<dl>
+	<dt><b>Purpose</b><dd>
+	Remove the elements at positions <tt>start</tt>..<tt>end-1</tt>.
+	<br>
+	Shift the elements in positions <tt>end..size-1</tt> to the left by
+	<tt>end-</tt>start positions.
+	<dt><b>Preconditions</b><dd>
+	None.
+	<dt><b>Exceptions</b><dd>
+	If <tt>start</tt> < 0 or <tt>start</tt> > <tt>end</tt> or <tt>end</tt> > <tt>get_size()</tt>
+	throw <tt>Subscript_range_exception</tt>.
+	</dl>
+</dl>
+
+</body></html>
