@@ -307,33 +307,44 @@ void Dynamic_array::remove(int start, int end) {						//-
 	// case 4: start and end are on different blocks
 	if (position_start.block_p != position_end.block_p && (end-block) > BLOCK_SIZE) {
 
-			//step how many blocks in between start and end?
+			// step how many blocks in between start and end?
 			// ex: start = 2, end = 14 , [5][][][s][][]->[5][][][][][]->[5][][][][][e]
 			int n = (end-start)/BLOCK_SIZE -1;
 
 		//case 4a : start and end are on the ends of the blocks.
 		if( (start % BLOCK_SIZE) == 0 && (end % BLOCK_SIZE) == 4) {
 			remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
-			size= size - BLOCK_SIZE;
+			size= size - n*BLOCK_SIZE;
 			return;
 		
 		//case 4b : start in middle, end at end
 		if( (start % BLOCK_SIZE) != 0 && (end % BLOCK_SIZE) == 4 ) {
 
-			//First Block, reset size
-			// if pos = 3, there should be 3 elements behind it 0 1 2
+			// First Block, reset size
+			// if pos = 3, [5][][][][3][r], [0][1][2] 3 elements remain, (Block - pos)= 2 removed.
+			// if pos = 2, [5][][][2][r][r], [0][1] remain, 
 			position_start.block_p->size = position_start.i;
 			
 			// remove blocks in between start block and end block
 			remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
 			
-			//update size
-			size= size -n*BLOCK_SIZE - (BLOCK_SIZE - position_start.i);
+			// update size
+			// [5][][][2][r][r] = 5-2 = 3
+			size = size -n*BLOCK_SIZE - (BLOCK_SIZE - position_start.i);
 			return;
 
-		// case 4c: start and end @ middle
-		if (start % BLOCK_SIZE !=0 && end % BLOCK_SIZE !=4) {
+		// case 4c: start @ 0 and end @ middle
+		if (start % BLOCK_SIZE ==0 && end % BLOCK_SIZE !=4) {
 
+			// reset size of end block
+			position_end.block_p->size = position_end.i;
+
+			// remove blocks in between start block and end block (this is gona be wrong for now since the hint was for mid param is ->next_p)
+			remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
+
+			// update size
+			size = size -n*BLOCK_SIZE - (BLOCK_SIZE - position_end.i);
+			return;
 		}
 
 		// case 4d: start @ mid, end @ mid
