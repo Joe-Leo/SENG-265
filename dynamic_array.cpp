@@ -251,9 +251,15 @@ void Dynamic_array::remove(int i) {								//-
 }												//-
 												//-
 void Dynamic_array::remove(int start, int end) {						//-
-	//case 1: range error
+	// case 1: range error
 	if ((start < 0 || start > end) || (end < start || end > size)) {
 		throw Subscript_range_exception();
+		return;
+	}
+
+	// case 2: Array empty
+	if (size == 0) {
+		return;
 	}
 
 	//case 2: 0 interval 
@@ -285,7 +291,7 @@ void Dynamic_array::remove(int start, int end) {						//-
 			//cout << "the else case was enterted \n" << endl;
 			//cout << "start @ " << position_start.i << " end @" << position_end.i << "\n" << endl;
 			//shift elements to the left and then reduce size.
-			for(int j = 0; j < BLOCK_SIZE - position_end.i ; j++) {
+			for (int j = 0; j < BLOCK_SIZE - position_end.i ; j++) {
 				
 				//cout << "A[" << position_start.i+j << "] <- A[" <<  position_end.i +j <<"]" << endl;
 				position_start.block_p->a[j + position_start.i] = position_start.block_p->a[j + position_end.i]; 
@@ -297,6 +303,29 @@ void Dynamic_array::remove(int start, int end) {						//-
 		}
 	
 	}
+	// case 4: start and end are on different blocks
+	if (position_start.block_p != position_end.block_p) {
+
+		//case 4a : start and end are on the ends of the blocks.
+		if( (start % BLOCK_SIZE) == 0 && (end % BLOCK_SIZE) == 4 ) {
+			remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
+			size= size - BLOCK_SIZE;
+			return;
+		
+		//case 4b : start in middle, end at end
+		if( (start % BLOCK_SIZE) != 0 && (end % BLOCK_SIZE) == 4 ) {
+			remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
+			size= size - BLOCK_SIZE;
+			return;
+
+		// case 4c: start and end @ middle
+
+		// case 4d: start @ mid, end @ mid
+		
+	}
+
+	
+	
 /*
 	//case 3: start on one blockend and end before reaching new block.
 	if ( (start % BLOCK_SIZE) == 0 && (end % BLOCK_SIZE) == 4 ) {
