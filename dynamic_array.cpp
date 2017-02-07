@@ -308,8 +308,23 @@ void Dynamic_array::remove(int start, int end) {						//-
 	if (position_start.block_p != position_end.block_p && (end-block) > BLOCK_SIZE) {
 
 			// step how many blocks in between start and end?
-			// ex: start = 2, end = 14 , [5][][][s][][]->[5][][][][][]->[5][][][][][e]
-			int n = (end-start)/BLOCK_SIZE -1;
+			// check cases
+			// ex: start = 0, end = 14 , [5][s][][][][]->[5][][][][][]->[5][][][][][e] = 2
+			// ex: start = 1, end = 14 , [5][][s][][][]->[5][][][][][]->[5][][][][][e] = 2
+			// ex: start = 7, end = 14 , [5][][][][][]->[5][][][s][][]->[5][][][][][e] = 0
+			// ex: start = 6, end = 11 , [5][][][][][]->[5][e][][][][]->[5][][e][][][] = 0
+			int num_of_Blocks = 0;
+			Block_position block_increment = findblock(start);
+			for (int i = 0; i < end< i+=5) {
+				if (block_increment.block_p != position_end.block_p) { // block positions are different
+					num_of_Blocks++;
+				} else { // block positions are the same.
+					return;
+				}
+				
+				block_increment = findblock(start+i);
+			}
+			
 
 		//case 4a : start and end are on the ends of the blocks.
 		if( (start % BLOCK_SIZE) == 0 && (end % BLOCK_SIZE) == 4) {
