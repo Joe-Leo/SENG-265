@@ -262,136 +262,150 @@ void Dynamic_array::remove(int start, int end) {						//-
 		return;
 	}
 
-	//case 2: 0 interval 
+	// case 3: 0 interval
 	if (start == end) {
+/*
 		//find the block
 		Block_position position = find_block(start);
 		//remove the current block 
 		remove_blocks(NULL,position.block_p, position.block_p);
+*/
 		return;
 	}
-	
-	//case 3: start and end are on the same block
+
 	// find the blocks
 	Block_position position_start = find_block(start);
 	Block_position position_end = find_block(end);
 
-	//if they are the same block
+	// case 4: start and end are on the same block
 	if (position_start.block_p == position_end.block_p ) {
 	
-//	cout << "There are start - end on same block: " << endl;
-
-		// case 3a: start and end are on the extremes
-		if( (start % BLOCK_SIZE) == 0 && (end % BLOCK_SIZE) == 4 && (end-start) <BLOCK_SIZE) {
-	//		cout << "There is a case where we are at the extremes of one cell \n" << endl;
+		// case 4a: start and end are on the ends also need to make sure block is full
+		if ((start % BLOCK_SIZE) == 0 && (end % BLOCK_SIZE) == 4 && position_start.block_p->size == BLOCK_SIZE) {
 			remove_blocks(position_start.pre_block_p, position_start.block_p, position_start.block_p);
-			size= size - BLOCK_SIZE;
+			size = size - BLOCK_SIZE;		
 			return;
-		//else start and end are somewhere in between in the block	
-		} else { 
-			//cout << "the else case was enterted \n" << endl;
-			//cout << "start @ " << position_start.i << " end @" << position_end.i << "\n" << endl;
+
+		// case 4b: start and end are somewhere in between in the block	and block is full
+		} else if ((start % BLOCK_SIZE) != 0 && (end % BLOCK_SIZE) != 4 && position_start.block_p->size == BLOCK_SIZE){ 
+			
 			//shift elements to the left and then reduce size.
 			for (int j = 0; j < BLOCK_SIZE - position_end.i ; j++) {
-				
-				//cout << "A[" << position_start.i+j << "] <- A[" <<  position_end.i +j <<"]" << endl;
-				position_start.block_p->a[j + position_start.i] = position_start.block_p->a[j + position_end.i]; 
+				position_start.block_p->a[j + position_start.i] = position_start.block_p->a[j + position_end.i]; 	
 			}
+
 			//reset the size of the block 
-			position_start.block_p->size = (position_end.i - position_start.i); 
+			//remaining = Total - removed
+			position_start.block_p->size = position_start.block_p->size - (position_end.i - position_start.i); 
 			size = size - (end - start) ;
 			return;
-		}
-	
-	}
-	// case 4: start and end are on different blocks
-	if (position_start.block_p != position_end.block_p && (end-block) > BLOCK_SIZE) {
-
-			// step how many blocks in between start and end?
-			// check cases
-			// ex: start = 0, end = 14 , [5][s][][][][]->[5][][][][][]->[5][][][][][e] = 2
-			// ex: start = 1, end = 14 , [5][][s][][][]->[5][][][][][]->[5][][][][][e] = 2
-			// ex: start = 7, end = 14 , [5][][][][][]->[5][][][s][][]->[5][][][][][e] = 0
-			// ex: start = 6, end = 11 , [5][][][][][]->[5][e][][][][]->[5][][e][][][] = 0
-			int num_of_Blocks = 0;
-			Block_position block_increment = findblock(start);
-			for (int i = 0; i < end< i+=5) {
-				if (block_increment.block_p != position_end.block_p) { // block positions are different
-					num_of_Blocks++;
-				} else { // block positions are the same.
-					return;
-				}
-				
-				block_increment = findblock(start+i);
-			}
-			
-
-		//case 4a : start and end are on the ends of the blocks.
-		if( (start % BLOCK_SIZE) == 0 && (end % BLOCK_SIZE) == 4) {
-			remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
-			size= size - n*BLOCK_SIZE;
-			return;
 		
-		//case 4b : start in middle, end at end
-		if( (start % BLOCK_SIZE) != 0 && (end % BLOCK_SIZE) == 4 ) {
+		//case 4c: start and end are somewhere in between block and block is not full
+		} else {
+	
+			//shift elements to the left and then reduce size.
+			for (int j = 0; j < position_start.block_p->size - position_end.i ; j++) {
+				position_start.block_p->a[j + position_start.i] = position_start.block_p->a[j + position_end.i];	
+			} 
 
+			//reset the size of the block 
+			//remaining = Total - removed
+			position_start.block_p->size = position_start.block_p->size - (position_end.i - position_start.i); 
+
+			//remove block if empty
+			if (position_start.block_p->size == 0) {
+				remove_blocks(position_start.pre_block_p, position_start.block_p, position_start.block_p);
+			}
+
+			size = size - (end - start);
+			}
+	}
+	
+	// case 5: start and end are on different blocks
+	if (position_start.block_p != position_end.block_p && (end-start) > BLOCK_SIZE) {
+
+		// how many blocks in between start and end?
+		// check cases
+		// ex: start = 0, end = 14 , [5][s][][][][]->[5][][][][][]->[5][][][][][e] = 2
+		// ex: start = 1, end = 14 , [5][][s][][][]->[5][][][][][]->[5][][][][][e] = 1
+		// ex: start = 7, end = 14 , [5][][][][][]->[5][][][s][][]->[5][][][][][e] = 0
+		// ex: start = 6, end = 11 , [5][][][][][]->[5][e][][][][]->[5][][e][][][] = 0
+		int num_of_Blocks = 0;
+		Block_position blocks_between = find_block(start);
+		cout << "\n num of blocks values b4 loop " << start << " " << end << " " << num_of_Blocks << endl;
+		for ( int i = 0; i < end; i+=BLOCK_SIZE ) {
+			if (blocks_between.block_p == position_end.block_p) {
+				return;
+			}
+			else {
+				cout << "\n num of blocks values " << i << " " << start + i << " " << end << " " << num_of_Blocks << endl;
+				num_of_Blocks ++;
+			}
+				blocks_between = find_block(start+i);
+		}
+		//if num_of_Blocks ==0, then on same block, if 1 then on adjacent block.
+		if (num_of_Blocks < 2) {
+			num_of_Blocks = 0;			
+		}
+		// if 2 or more, then it is num_blocks away from your starting block.
+		else {
+			num_of_Blocks = num_of_Blocks -1;	
+		}
+			
+		// case 5a : start and end are on the ends of the blocks.
+		if( (start % BLOCK_SIZE) == 0 && ((end-1) % BLOCK_SIZE) == 4) {
+		
+			//needs to b4 remove otherwise error, and blocks size may not be full.
+			size = size - num_of_Blocks*BLOCK_SIZE - position_end.block_p->size;
+			remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
+			return;
+		}
+		// case 5b : start in middle, end at end
+		if( (start % BLOCK_SIZE) != 0 && ((end-1) % BLOCK_SIZE) == 4 ) {
 			// First Block, reset size
 			// if pos = 3, [5][][][][3][r], [0][1][2] 3 elements remain, (Block - pos)= 2 removed.
 			// if pos = 2, [5][][][2][r][r], [0][1] remain, 
 			position_start.block_p->size = position_start.i;
 			
 			// remove blocks in between start block and end block
-			remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
+			remove_blocks(position_start.block_p, position_start.block_p->next_p, position_end.block_p);
 			
 			// update size
 			// [5][][][2][r][r] = 5-2 = 3
-			size = size -n*BLOCK_SIZE - (BLOCK_SIZE - position_start.i);
+			size = size - num_of_Blocks*BLOCK_SIZE - position_start.block_p->size ;
 			return;
-
-		// case 4c: start @ 0 and end @ middle
-		if (start % BLOCK_SIZE ==0 && end % BLOCK_SIZE !=4) {
-
+		}
+		// case 5c: start @ 0 and end @ middle
+		if (start % BLOCK_SIZE ==0 && (end-1) % BLOCK_SIZE !=4) {
+			cout << "Case Found diff Block: 0 and not 4 and blocks between is " << num_of_Blocks << endl;
+			cout << "\n \n starting values " << start << " " << end << " " << "" << position_start.block_p->size << " " << position_end.block_p->size << endl;
+			cout << "\n size " << size << " numblocks*size " << num_of_Blocks*BLOCK_SIZE << " end block size " << position_end.block_p->size << endl;
 			// reset size of end block
 			position_end.block_p->size = position_end.i;
 
-			// remove blocks in between start block and end block (this is gona be wrong for now since the hint was for mid param is ->next_p)
-			remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
+			//shift elements left 
+			for (int j = 0; j < (position_end.block_p->size - position_end.i); j++ ) {
+				position_end_.block_p->a[j] = position_end_.block_p->a[ j + position_end.i];/// <- error about scope
+			}
 
 			// update size
-			size = size -n*BLOCK_SIZE - (BLOCK_SIZE - position_end.i);
+			size = size - num_of_Blocks*BLOCK_SIZE - (BLOCK_SIZE - position_end.i);
+			remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
+
+			
+
 			return;
 		}
 
-		// case 4d: start @ mid, end @ mid
-		if (start % BLOCK_SIZE !=0 && end % BLOCK_SIZE == 4) {
+		// case 5d: start @ mid, end @ mid
+		if (start % BLOCK_SIZE !=0 && end % BLOCK_SIZE != 4) {
+//			cout << "Case Found diff Block: not 0 and not 4 and blocks between is " << num_of_Blocks << endl;
 
+			return;
 		}
 
 		
 	}
-
-	
-	
-/*
-	//case 3: start on one blockend and end before reaching new block.
-	if ( (start % BLOCK_SIZE) == 0 && (end % BLOCK_SIZE) == 4 ) {
-	
-		// n is the amount of blocks needed to be del, 
-		int n = (end-start) / BLOCK_SIZE;
-
-		//cout << "case 3 was entered and the number of blocks between is " << n <<  endl;
-		if (start == 0) {
-
-		}
-		for ( int i = 0 ; i < n; i++) {
-			Block_position position = find_block(start+(i*BLOCK_SIZE));
-		//	cout << "The element at block position is " << position.block_p->a[start+(i*BLOCK_SIZE)]<< endl;;
-			remove_blocks(position.pre_block_p,position.block_p, position.block_p);
-		}
-
-		return;
-	}
-*/
 }												//-
 												//-
 // ********** private functions **********							//-
