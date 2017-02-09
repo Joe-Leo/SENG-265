@@ -252,7 +252,7 @@ void Dynamic_array::remove(int i) {								//-
 												//-
 void Dynamic_array::remove(int start, int end) {						//-
 	// case 1: range error
-	if ((start < 0 || start > end) || (end < start || end > size)) {
+	if ((start < 0 || start > end) || end > size) {
 		throw Subscript_range_exception();
 		return;
 	}
@@ -322,7 +322,7 @@ void Dynamic_array::remove(int start, int end) {						//-
 	}
 	
 	// case 5: start and end are on different blocks
-	if (position_start.block_p != position_end.block_p && (end-start) > BLOCK_SIZE) {
+	if (position_start.block_p != position_end.block_p ) {
 
 		// how many blocks in between start and end?
 		// check cases
@@ -337,56 +337,56 @@ void Dynamic_array::remove(int start, int end) {						//-
 		//this works for all cases where end does not fall on the first number of new block
 		if (position_end.i != 0) {
 //			cout << "\nCASE e not 0 " << endl;
-			for ( int i = 0; i < end; i+=BLOCK_SIZE ) {
-				if (blocks_between.block_p == position_end.block_p) {
-					return;
+			for ( int i = 0; i <= end; i+=BLOCK_SIZE ) {
+				if (blocks_between.block_p != position_end.block_p) {
+//					cout << "\n i " << i << " start+i " << start + i << " end " << end << " NOB " << num_of_Blocks << endl;
+					++num_of_Blocks;
+					blocks_between = find_block(start+i);
 				}
 				else {
-//					cout << "\n num of blocks values " << i << " " << start + i << " " << end << " " << num_of_Blocks << endl;
-					++num_of_Blocks;
+					return;
 				}
-				blocks_between = find_block(start+i);
+				
 			}
 			//case where the end [5][][][][][]->[5][e][][][][] 
 		} else{
-//			cout << "\nCASE e @ 0 " << endl;
-			for ( int i = 0; i < end; i+=BLOCK_SIZE ) {
-				if (blocks_between.block_p == position_end.pre_block_p) {
-					return;
+			for ( int i = 0; i <= end; i+=BLOCK_SIZE ) {
+				if (blocks_between.block_p != position_end.pre_block_p) {
+//					cout << "\n i " << i << " start+i " << start + i << " end " << end << " NOB " << num_of_Blocks << endl;
+					num_of_Blocks ++;
+					blocks_between = find_block(start+i);	
 				}
 				else {
-	//				cout << "\n num of blocks values " << i << " " << start + i << " " << end << " " << num_of_Blocks << " case E @ 0" << endl;
-					num_of_Blocks ++;
+					return;
 				}
-				blocks_between = find_block(start+i);
+				
 			}
 		}
+
 //		cout << "\nnum_ofBlocks b4 correction is " << num_of_Blocks << endl;
 
-		//if num_of_Blocks ==0, then on same block, if 1 then on adjacent block.
-		if (num_of_Blocks <= 1) {
-			cout << "Enterted if num_of_Blocks <=1" << endl;
-			num_of_Blocks = 0;		
-			cout << "Num of Blocks should be = 0  but num_of_Blocks is " << num_of_Blocks << " with START " << start << " END " << end << endl; 	
-		}
-		// if 2 or more, then it is num_blocks away from your starting block.
-		else {
-			num_of_Blocks = num_of_Blocks -1;	
-//			cout << "Num of Blocks should be > 0  but num_of_Blocks is " << num_of_Blocks << " with START " << start << " END " << end << endl; 
-		}
+		// This correction factor needs to be here, the num of blocks is always + 1 more than it is actually
+		num_of_Blocks = num_of_Blocks -1;	
+
+//		cout << "\nnum_ofBlocks b4 correction after " << num_of_Blocks << endl;
 
 		// case 5a: start @ begining of Block
 		if( (start % BLOCK_SIZE) == 0 ) {
 			
 			// case5a.a: remove to end of a block.
-			if ((end-1) % BLOCK_SIZE == 4 && end % BLOCK_SIZE == 0) {
+			// [5][s][x][x][x][x]->[x][x][x][x][x][e-1]->[5][e][][][][]
+			if ( (end % BLOCK_SIZE) == 0 || (end % BLOCK_SIZE) == position_end.block_p->size) {
+				cout << "\nCASE START -> END FOUND \n"<< endl; 
 				size = size - num_of_Blocks*BLOCK_SIZE - position_end.block_p->size;
+
 				remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
 				return;
 
 				// case5a.b: remove to somewhere in middle of end block
+				// [5][s][x][x][x][x] [x][x][x][x][x][x]->[5][x][e-1][e][][]
 			} else {
 				//cout << "Case Found diff Block: 0 and not 4" << endl;
+				cout << "\nCASE START -> mid FOUND \n"<< endl; 
 				
 				//shift elements left 
 				//move elements from end pos to the 0th pos 
@@ -416,9 +416,11 @@ void Dynamic_array::remove(int start, int end) {						//-
 		// case 5b : start in middle 
 		if ( (start % BLOCK_SIZE) != 0) {
 
-			cout << "THESE ARE ALL CASES WHERE START is NOT 0" << endl;
 			// case 5b.a remove all blocks up to end block
-			if ( ((end-1) % BLOCK_SIZE) == 4 && (end % BLOCK_SIZE) == 0) {
+//			if ( ((end-1) % BLOCK_SIZE) == 4 && (end % BLOCK_SIZE) == 0) {
+			if ((end % BLOCK_SIZE) == 0) {
+
+				cout << "\nCASE mid -> End FOUND \n"<< endl; 
 				// First Block, reset size
 				// if pos = 3, [5][][][][3][r], [0][1][2] 3 elements remain, (Block - pos)= 2 removed.
 				// if pos = 2, [5][][][2][r][r], [0][1] remain, 
@@ -435,10 +437,8 @@ void Dynamic_array::remove(int start, int end) {						//-
 
 			//case 5b.b remove mid to mid
 			if ( ((end-1) % BLOCK_SIZE) != 4 && (end % BLOCK_SIZE) != 0) {
-				cout << "Case Found diff Block: not 0 and not 4 " << endl;
-				cout << "\n THIS IS THE ACTIVE CASE WE ARE LOOKING AT " << endl;
-				cout << "\n \n starting values START " << start << " END " << end << " P.size " << position_start.block_p->size << " E.size " << position_end.block_p->size << " num_of_Blocks " << num_of_Blocks << endl;  
-				cout << "\n size " << size << " numblocks*size " << num_of_Blocks*BLOCK_SIZE << " end block size " << position_end.block_p->size << endl;
+				cout << "\nCASE mid -> mid FOUND \n"<< endl; 
+			
 
 			
 				// shift left from end block
@@ -453,17 +453,16 @@ void Dynamic_array::remove(int start, int end) {						//-
 
 				// remove the blocks
 				// case adjacent blocks
-				if ( num_of_Blocks <= 1) {
-					remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
-				}
+//				if ( num_of_Blocks <= 1) {
+//					remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
+//				}
 				// case there are blocks between start bock and end block
-				else {
-					remove_blocks(position_start.pre_block_p, position_start.block_p->next_p, position_end.pre_block_p);
-				}
+//				else {
+//					remove_blocks(position_start.block_p, position_start.block_p->next_p, position_end.pre_block_p);
+//				}
 
 				// shift numbers from 
-				cout << "\n \n ending values  START " << start << " END " << end << " S.size " << position_start.block_p->size << " E.Size " << position_end.block_p->size << endl;
-				cout << "\nThis is end of ACTIVE CASE " << endl;
+	
 				return;
 			}
 		}
