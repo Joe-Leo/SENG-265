@@ -335,58 +335,62 @@ void Dynamic_array::remove(int start, int end) {						//-
 //		cout << "\n num of blocks values b4 loop " << start << " " << end << " " << num_of_Blocks << endl;
 		
 		//this works for all cases where end does not fall on the first number of new block
-		if (position_end.i != 0) {
-//			cout << "\nCASE e not 0 " << endl;
+		if (end % BLOCK_SIZE != 0 && (end -start) > BLOCK_SIZE ) {
 			for ( int i = 0; i <= end; i+=BLOCK_SIZE ) {
 				if (blocks_between.block_p != position_end.block_p) {
 //					cout << "\n i " << i << " start+i " << start + i << " end " << end << " NOB " << num_of_Blocks << endl;
-					++num_of_Blocks;
-					blocks_between = find_block(start+i);
+					++num_of_Blocks;		
+				} else {
+					break;
 				}
-				else {
-					return;
-				}
-				
+			blocks_between = find_block(start+i);
 			}
-			//case where the end [5][][][][][]->[5][e][][][][] 
-		} else{
+		} else {
 			for ( int i = 0; i <= end; i+=BLOCK_SIZE ) {
 				if (blocks_between.block_p != position_end.pre_block_p) {
 //					cout << "\n i " << i << " start+i " << start + i << " end " << end << " NOB " << num_of_Blocks << endl;
-					num_of_Blocks ++;
-					blocks_between = find_block(start+i);	
+					++num_of_Blocks;		
+				} else {
+					break;
 				}
-				else {
-					return;
-				}
-				
-			}
+			blocks_between = find_block(start+i);
+		}
 		}
 
-//		cout << "\nnum_ofBlocks b4 correction is " << num_of_Blocks << endl;
-
 		// This correction factor needs to be here, the num of blocks is always + 1 more than it is actually
-		num_of_Blocks = num_of_Blocks -1;	
-
-//		cout << "\nnum_ofBlocks b4 correction after " << num_of_Blocks << endl;
-
+		if( num_of_Blocks <= 0 ) {
+			num_of_Blocks = 0;
+		} else {
+			num_of_Blocks = num_of_Blocks -1;	
+		}
+		
 		// case 5a: start @ begining of Block
 		if( (start % BLOCK_SIZE) == 0 ) {
 			
 			// case5a.a: remove to end of a block.
 			// [5][s][x][x][x][x]->[x][x][x][x][x][e-1]->[5][e][][][][]
 			if ( (end % BLOCK_SIZE) == 0 || (end % BLOCK_SIZE) == position_end.block_p->size) {
-				cout << "\nCASE START -> END FOUND \n"<< endl; 
+//				cout << "\nCASE START -> END FOUND \n"<< endl; 
+
+//				cout << "\n \n starting values START " << start << " END " << end << " P.size " << position_start.block_p->size << " E.size " << position_end.block_p->size << " num_of_Blocks " << num_of_Blocks << endl;  
+//				cout << "\n size " << size << " numblocks*size " << num_of_Blocks*BLOCK_SIZE << " end block size " << position_end.block_p->size << endl;
+				
+
 				size = size - num_of_Blocks*BLOCK_SIZE - position_end.block_p->size;
 
-				remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
+//				cout << "\n \n ending values  START " << start << " END " << end << " S.size " << position_start.block_p->size << " E.Size " << position_end.block_p->size << endl;
+
+				if (num_of_Blocks <= 1){
+					remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
+				} else {
+					remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.pre_block_p);
+				}
+				
 				return;
 
 				// case5a.b: remove to somewhere in middle of end block
 				// [5][s][x][x][x][x] [x][x][x][x][x][x]->[5][x][e-1][e][][]
 			} else {
-				//cout << "Case Found diff Block: 0 and not 4" << endl;
-				cout << "\nCASE START -> mid FOUND \n"<< endl; 
 				
 				//shift elements left 
 				//move elements from end pos to the 0th pos 
@@ -414,13 +418,11 @@ void Dynamic_array::remove(int start, int end) {						//-
 
 
 		// case 5b : start in middle 
-		if ( (start % BLOCK_SIZE) != 0) {
+		if ( (start % BLOCK_SIZE) != 0 ) {
 
 			// case 5b.a remove all blocks up to end block
-//			if ( ((end-1) % BLOCK_SIZE) == 4 && (end % BLOCK_SIZE) == 0) {
-			if ((end % BLOCK_SIZE) == 0) {
+			if ((end % BLOCK_SIZE) == 0 || (end % BLOCK_SIZE) == position_end.block_p->size ) {
 
-				cout << "\nCASE mid -> End FOUND \n"<< endl; 
 				// First Block, reset size
 				// if pos = 3, [5][][][][3][r], [0][1][2] 3 elements remain, (Block - pos)= 2 removed.
 				// if pos = 2, [5][][][2][r][r], [0][1] remain, 
@@ -431,38 +433,47 @@ void Dynamic_array::remove(int start, int end) {						//-
 				size = size - num_of_Blocks*BLOCK_SIZE - position_start.block_p->size ;
 
 				// remove blocks in between start block and end block
-				remove_blocks(position_start.block_p, position_start.block_p->next_p, position_end.block_p);
+				if (num_of_Blocks <= 1){
+					remove_blocks(position_start.block_p, position_start.block_p->next_p, position_end.block_p);
+				} else {
+					remove_blocks(position_start.block_p, position_start.block_p->next_p, position_end.pre_block_p);
+				}
 				return;
 			}
 
 			//case 5b.b remove mid to mid
 			if ( ((end-1) % BLOCK_SIZE) != 4 && (end % BLOCK_SIZE) != 0) {
-				cout << "\nCASE mid -> mid FOUND \n"<< endl; 
-			
+/*				
+				cout << "\nCASE mid -> mid FOUND \n"<< endl; 			
+				cout << "\nstarting values START " << start << " END " << end << " P.size " << position_start.block_p->size << " E.size " << position_end.block_p->size << " num_of_Blocks " << num_of_Blocks << endl;  
+				cout << "\nsize " << size << " numblocks*size " << num_of_Blocks*BLOCK_SIZE << " end block size " << position_end.block_p->size << endl;
+				cout << "\nStart values MOD " << start % BLOCK_SIZE << " position.i " << position_start.i << " End values MOD " << end % BLOCK_SIZE << " position.i " << position_end.i << endl;			
+*/				
+				//resize left block
+				position_start.block_p->size = position_start.i;
 
-			
-				// shift left from end block
+				//shift the ending block elements left and resize
 				for (int j = 0; j < position_end.block_p->size - position_end.i ; j++) {
-				position_end.block_p->a[j] = position_end.block_p->a[j + position_end.i]; 	
+					position_end.block_p->a[j] = position_end.block_p->a[j + position_end.i]; 	
+				}
+				position_end.block_p->size = position_end.block_p->size - position_end.i;
+			
+				// update size
+				// Total = n*blocks - removed from start - removed from end
+				// [5][s][x][x][x]->[5][x][x][e][][]
+				size = size - num_of_Blocks*BLOCK_SIZE - (BLOCK_SIZE - position_start.block_p->size) - position_end.i;
+/*
+				cout << "\n \n ending values  START " << start << " END " << end << " S.size " << position_start.block_p->size << " E.Size " << position_end.block_p->size << endl;
+
+*/
+				//remove blocks
+				if (num_of_Blocks == 1) {
+					remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
+				} else {
+					//segmentation fault with this line active
+//					remove_blocks(position_start.block_p, position_start.block_p->next_p, position_end.pre_block_p);
 				}
 
-				// update size
-				position_start.block_p->size = position_start.i;
-				position_end.block_p->size = position_end.i;
-				size = size - num_of_Blocks*BLOCK_SIZE - position_end.i - position_start.i;
-
-				// remove the blocks
-				// case adjacent blocks
-//				if ( num_of_Blocks <= 1) {
-//					remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
-//				}
-				// case there are blocks between start bock and end block
-//				else {
-//					remove_blocks(position_start.block_p, position_start.block_p->next_p, position_end.pre_block_p);
-//				}
-
-				// shift numbers from 
-	
 				return;
 			}
 		}
