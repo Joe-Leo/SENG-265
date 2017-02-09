@@ -469,9 +469,9 @@ void Dynamic_array::remove(int start, int end) {						//-
 				//remove blocks
 				if (num_of_Blocks == 1) {
 					remove_blocks(position_start.pre_block_p, position_start.block_p, position_end.block_p);
-				} else {
+				} else if ( num_of_Blocks > 1) {
 					//segmentation fault with this line active
-//					remove_blocks(position_start.block_p, position_start.block_p->next_p, position_end.pre_block_p);
+					remove_blocks(position_start.block_p, position_start.block_p->next_p, position_end.pre_block_p);
 				}
 
 				return;
